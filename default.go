@@ -2,6 +2,7 @@
 package main
 
 import (
+	"flag"
 	"fmt"
 	"github.com/golang/groupcache/lru"
 	"github.com/grafov/m3u8"
@@ -14,14 +15,6 @@ import (
 	"path"
 	"strings"
 	"time"
-)
-
-const (
-	OUT_PATH = "mystream/"
-	IN_URL   = "http://rtmp.ottdemo.rrsat.com/rrsatlive4/rrsat4multi.smil/playlist.m3u8"
-	//IN_URL   = "http://makombo.org/cast/media/cmshlstest/master.m3u8"
-	//IN_URL   = "http://makombo.org/cast/media/DevBytes%20Google%20Cast%20SDK_withGDLintro_Apple_HLS_h264_SF_16x9_720p/DevBytes%20Google%20Cast%20SDK_withGDLintro_Apple_HLS_h264_SF_16x9_720p.m3u8"
-	//IN_URL = "http://makombo.org/cast/media/DevBytes%20Google%20Cast%20SDK_withGDLintro_Apple_HLS_h264_SF_16x9_720p/stream-2-229952/index.m3u8"
 )
 
 var client = &http.Client{}
@@ -157,8 +150,8 @@ func getPlaylist(u *url.URL) {
 				}
 				getPlaylist(msURL)
 
-				log.Print("Downloaded index number ", k)
-
+				log.Print("Downloaded chunklist number ", k+1, "\n\n")
+				//break
 			}
 
 		}
@@ -190,7 +183,7 @@ func getPlaylist(u *url.URL) {
 		}
 
 		writePlaylist(u, m3u8.Playlist(mediapl))
-		log.Print("Downloaded Media Playlist: ", path.Base(u.Path), "\n")
+		log.Print("Downloaded Media Playlist: ", path.Base(u.Path))
 
 		//time.Sleep(time.Duration(int64(mediapl.TargetDuration)) * time.Second)
 
@@ -200,8 +193,35 @@ func getPlaylist(u *url.URL) {
 
 }
 
+var OUT_PATH string = "/inetpub/wwwroot/cast/media/znbc/"
+var IN_URL string = "http://rtmp.ottdemo.rrsat.com/rrsatlive4/rrsat4multi.smil/playlist.m3u8"
+
+//var IN_URL string = "http://makombo.org/cast/media/cmshlstest/master.m3u8"
+//var IN_URL string = "http://makombo.org/cast/media/DevBytes%20Google%20Cast%20SDK_withGDLintro_Apple_HLS_h264_SF_16x9_720p/DevBytes%20Google%20Cast%20SDK_withGDLintro_Apple_HLS_h264_SF_16x9_720p.m3u8"
+//var IN_URL string = "http://makombo.org/cast/media/DevBytes%20Google%20Cast%20SDK_withGDLintro_Apple_HLS_h264_SF_16x9_720p/stream-2-229952/index.m3u8"
 func main() {
-	log.Print("Welcome to HLS Dowloader By Chisomo Sakala!-----------\n")
+	//hi
+	flag.Parse()
+
+	os.Stderr.Write([]byte(fmt.Sprintf("HTTP Live Streaming (HLS) downloader\n")))
+	os.Stderr.Write([]byte("Copyright (C) 2014 Chisomo Sakala. Licensed for use under the GNU GPL version 3.\n"))
+
+	if flag.NArg() < 2 {
+		os.Stderr.Write([]byte("Usage: hlsdownloader absolute-url-m3u8-file path-to-output-directory\n"))
+		os.Stderr.Write([]byte(fmt.Sprintf("\n...Continuing Under the assumption: \n\thlsdownloader %s %s\n", IN_URL, OUT_PATH)))
+
+		flag.PrintDefaults()
+		//os.Exit(2)
+	} else {
+		IN_URL = flag.Arg(0)
+		OUT_PATH = flag.Arg(1)
+	}
+
+	if !strings.HasPrefix(IN_URL, "http") {
+		log.Fatal("Playlist URL must begin with http/https")
+	}
+
+	fmt.Print("\n\n\n")
 
 	theURL, err := url.Parse(IN_URL)
 	if err != nil {
@@ -210,7 +230,7 @@ func main() {
 	for {
 
 		getPlaylist(theURL)
-		log.Print("Refeshed Main Play")
+		log.Print("Refeshed Master Playlist\n\n")
 	}
 
 }
