@@ -4,7 +4,7 @@ package main
 import (
 	"flag"
 	"fmt"
-	"github.com/golang/groupcache/lru"
+	//"github.com/golang/groupcache/lru"
 	"github.com/grafov/m3u8"
 	"io"
 	"log"
@@ -24,13 +24,13 @@ func getContent(u *url.URL) (io.ReadCloser, error) {
 
 	req, err := http.NewRequest("GET", u.String(), nil)
 	if err != nil {
-		log.Fatal(err)
+		log.Fatal("cms1> " + err.Error())
 	}
 
 	req.Header.Set("User-Agent", USER_AGENT)
 	resp, err := client.Do(req)
 	if err != nil {
-		log.Print(err)
+		log.Print("cms2> " + err.Error())
 		time.Sleep(time.Duration(2) * time.Second)
 	}
 
@@ -82,13 +82,13 @@ func writePlaylist(u *url.URL, mpl m3u8.Playlist) {
 	fileName := path.Base(u.Path)
 	out, err := os.Create(OUT_PATH + fileName)
 	if err != nil {
-		log.Fatal(err)
+		log.Fatal("cms3> " + err.Error())
 	}
 	defer out.Close()
 
 	_, err = mpl.Encode().WriteTo(out)
 	if err != nil {
-		log.Fatal(err)
+		log.Fatal("cms4> " + err.Error())
 	}
 }
 
@@ -97,43 +97,43 @@ func download(u *url.URL) {
 
 	out, err := os.Create(OUT_PATH + fileName)
 	if err != nil {
-		log.Fatal(err)
+		log.Fatal("cms5> " + err.Error())
 	}
 	defer out.Close()
 
 	content, err := getContent(u)
 	if err != nil {
-		log.Print(err)
+		log.Print("cms6> " + err.Error())
 		//continue
 	}
 	defer content.Close()
 
 	_, err = io.Copy(out, content)
 	if err != nil {
-		log.Fatal(err)
+		log.Print("cms7> " + err.Error() + "Failed to download " + fileName + "\n")
 	}
 
-	log.Print("Downloaded ", fileName, "\n")
+	log.Print("cms8> "+"Downloaded ", fileName, "\n")
 
 }
 
 func getPlaylist(u *url.URL) {
 
-	cache := lru.New(64)
+	//cache := lru.New(64)
 
 	content, err := getContent(u)
 	if err != nil {
-		log.Fatal(err)
+		log.Fatal("cms9> " + err.Error())
 	}
 
 	playlist, listType, err := m3u8.DecodeFrom(content, true)
 	if err != nil {
-		log.Fatal(err)
+		log.Fatal("cms10> " + err.Error())
 	}
 	content.Close()
 
 	if listType != m3u8.MEDIA && listType != m3u8.MASTER {
-		log.Fatal("Not a valid playlist")
+		log.Fatal("cms11> " + "Not a valid playlist")
 		return
 	}
 
@@ -146,17 +146,17 @@ func getPlaylist(u *url.URL) {
 
 				msURL, err := absolutize(variant.URI, u)
 				if err != nil {
-					log.Fatal(err)
+					log.Fatal("cms12> " + err.Error())
 				}
 				getPlaylist(msURL)
 
-				log.Print("Downloaded chunklist number ", k+1, "\n\n")
+				log.Print("cms13> "+"Downloaded chunklist number ", k+1, "\n\n")
 				//break
 			}
 
 		}
 		writePlaylist(u, m3u8.Playlist(masterpl))
-		log.Print("Downloaded Master Playlist: ", path.Base(u.Path), "\n")
+		log.Print("cms14> "+"Downloaded Master Playlist: ", path.Base(u.Path), "\n")
 
 		return
 
@@ -170,20 +170,20 @@ func getPlaylist(u *url.URL) {
 
 				msURL, err := absolutize(segment.URI, u)
 				if err != nil {
-					log.Fatal(err)
+					log.Fatal("cms15> " + err.Error())
 				}
 
-				_, hit := cache.Get(msURL.String())
-				if !hit {
-					cache.Add(msURL.String(), nil)
-					download(msURL)
-				}
+				//_, hit := cache.Get(msURL.String())
+				//if !hit {
+				//	cache.Add(msURL.String(), nil)
+				download(msURL)
+				//}
 
 			}
 		}
 
 		writePlaylist(u, m3u8.Playlist(mediapl))
-		log.Print("Downloaded Media Playlist: ", path.Base(u.Path))
+		log.Print("cms16> "+"Downloaded Media Playlist: ", path.Base(u.Path))
 
 		//time.Sleep(time.Duration(int64(mediapl.TargetDuration)) * time.Second)
 
@@ -218,19 +218,19 @@ func main() {
 	}
 
 	if !strings.HasPrefix(IN_URL, "http") {
-		log.Fatal("Playlist URL must begin with http/https")
+		log.Fatal("cms17> " + "Playlist URL must begin with http/https")
 	}
 
 	fmt.Print("\n\n\n")
 
 	theURL, err := url.Parse(IN_URL)
 	if err != nil {
-		log.Fatal(err)
+		log.Fatal("cms18> " + err.Error())
 	}
 	for {
 
 		getPlaylist(theURL)
-		log.Print("Refeshed Master Playlist\n\n")
+		log.Print("cms19> " + "Refeshed Master Playlist\n\n")
 	}
 
 }
